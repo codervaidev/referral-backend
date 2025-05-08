@@ -1,0 +1,7 @@
+referral.acsfutureschool.com {
+    reverse_proxy app:8080
+}
+
+referral-dashboard.acsfutureschool.com {
+    reverse_proxy prometheus:9090
+}
