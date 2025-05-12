@@ -3,8 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
-
+	
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -79,4 +80,19 @@ func (r *UserGemRepo) ValidateReferralCode(ctx context.Context, userID uint, ref
 	}
 
 	return count > 0, nil
+}
+
+func (r *UserGemRepo) GenerateReferralCode(ctx context.Context, userID uint) (string, error) {
+	var referralCode = "REF-" + strconv.FormatUint(uint64(userID), 10)
+	query := `
+		INSERT INTO referral_user (referer_code, user_id)
+		VALUES ($1, $2) returning referer_code
+	`
+	var newReferralCode string
+	err := r.DB.QueryRow(ctx, query, referralCode, userID).Scan(&newReferralCode)
+	if err != nil {
+		return "", err
+	}
+
+	return newReferralCode, nil
 }

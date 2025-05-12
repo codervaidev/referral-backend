@@ -24,6 +24,7 @@ func (h *Handler) RegisterUserGemRoutes(r *mux.Router) {
 	r.Handle("/user-gems", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserGems))).Methods("GET")
 	r.Handle("/user-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserReferralCode))).Methods("GET")
 	r.Handle("/validate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.ValidateReferralCode))).Methods("GET")
+	r.Handle("/generate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GenerateReferralCode))).Methods("POST")
 }
 
 func (h *UserGemHandler) GetUserGems(w http.ResponseWriter, r *http.Request) {
@@ -96,4 +97,26 @@ func (h *UserGemHandler) ValidateReferralCode(w http.ResponseWriter, r *http.Req
 	}
 
 	json.NewEncoder(w).Encode(valid)
+}
+
+func (h *UserGemHandler) GenerateReferralCode(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userIDInt, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	referralCode, err := h.Repo.GenerateReferralCode(r.Context(), uint(userIDInt))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(referralCode)
 }
