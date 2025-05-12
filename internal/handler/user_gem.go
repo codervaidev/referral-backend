@@ -42,7 +42,12 @@ func (h *UserGemHandler) GetUserGems(w http.ResponseWriter, r *http.Request) {
 
 	gems, err := h.Repo.GetUserGems(r.Context(), uint(userIDInt))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": err.Error(),
+			"status": "error",
+		})
 		return
 	}
 
@@ -64,7 +69,12 @@ func (h *UserGemHandler) GetUserReferralCode(w http.ResponseWriter, r *http.Requ
 
 	referralCode, err := h.Repo.GetUserReferralCode(r.Context(), uint(userIDInt))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": err.Error(),
+			"status": "error",
+		})
 		return
 	}
 
@@ -92,7 +102,12 @@ func (h *UserGemHandler) ValidateReferralCode(w http.ResponseWriter, r *http.Req
 
 	valid, err := h.Repo.ValidateReferralCode(r.Context(), uint(userIDInt), referralCode)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": err.Error(),
+			"status": "error",
+		})
 		return
 	}
 
@@ -114,7 +129,12 @@ func (h *UserGemHandler) GenerateReferralCode(w http.ResponseWriter, r *http.Req
 
 	referralCode, err := h.Repo.GenerateReferralCode(r.Context(), uint(userIDInt))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": err.Error(),
+			"status": "error",
+		})
 		return
 	}
 

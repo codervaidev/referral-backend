@@ -16,10 +16,12 @@ func NewGemHistoryRepo(db *pgxpool.Pool) *GemHistoryRepo {
 	return &GemHistoryRepo{db: db}
 }
 
-func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]models.GemHistory, error) {
+func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]models.GemHistoryResponse, error) {
 	query := `
-		SELECT id, amount, user_id, message, type
-		FROM gems_history
+		SELECT gh.id, gh.amount, gh.user_id, gh.message, gh.type,gh.created_at,u.phone,p.name 
+		FROM gems_history gh
+		JOIN "User" u on u.id = user_id
+		JOIN "Profile" p on p."userId" = u.id
 		WHERE user_id = $1
 	`
 	rows, err := r.db.Query(ctx, query, userID)
@@ -28,10 +30,10 @@ func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]mode
 	}
 	defer rows.Close()
 
-	var gemHistory []models.GemHistory
+	var gemHistory []models.GemHistoryResponse
 	for rows.Next() {
-		var gh models.GemHistory
-		err := rows.Scan(&gh.ID, &gh.Amount, &gh.UserID, &gh.Message, &gh.Type)
+		var gh models.GemHistoryResponse
+		err := rows.Scan(&gh.ID, &gh.Amount, &gh.UserID, &gh.Message, &gh.Type, &gh.CreatedAt, &gh.Phone, &gh.Name)
 		if err != nil {
 			return nil, err
 		}
