@@ -26,6 +26,7 @@ func New(db *pgxpool.Pool) *mux.Router {
 	// Gems routes
 	handler.RegisterGemRoutes(api)
 	handler.RegisterUserGemRoutes(api)
+	handler.RegisterGemHistoryRoutes(api)
 
 	return router
 }
