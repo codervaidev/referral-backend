@@ -1,3 +1,13 @@
+{
+    # Use Let's Encrypt's staging environment to avoid rate limits
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+    email jami@acsfutureschool.com
+    # Optional: define logging or other global options
+    # log {
+    #     output file /var/log/caddy.log
+    #     level INFO
+    # }
+}
 referral.acsfutureschool.com {
     reverse_proxy app:8080
 }
