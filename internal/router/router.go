@@ -13,6 +13,7 @@ func New(db *pgxpool.Pool) *mux.Router {
 	api := router.PathPrefix("/api").Subrouter()
 
 	// Add middleware
+	api.Use(middleware.CORSMiddleware)
 	api.Use(middleware.MetricsMiddleware)
 
 	handler := handler.New(db)
