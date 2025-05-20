@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -8,6 +8,8 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    volumes:
+      - .:/app
     restart: unless-stopped
 
   prometheus:
@@ -32,4 +34,4 @@ services:
       - prometheus
     restart: unless-stopped
 volumes:
-  prometheus_data: 
+  prometheus_data:
