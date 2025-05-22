@@ -21,10 +21,10 @@ func (h *Handler) RegisterUserGemRoutes(r *mux.Router) {
 	cfg := config.Load()
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
 
-	r.Handle("/user-gems", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserGems))).Methods("GET")
-	r.Handle("/user-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserReferralCode))).Methods("GET")
+	r.Handle("/user-gems", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserGems))).Methods("GET","OPTIONS")
+	r.Handle("/user-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserReferralCode))).Methods("GET","OPTIONS")
 	r.Handle("/validate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.ValidateReferralCode))).Methods("GET","OPTIONS")
-	r.Handle("/generate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GenerateReferralCode))).Methods("POST")
+	r.Handle("/generate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GenerateReferralCode))).Methods("POST","OPTIONS")
 }
 
 func (h *UserGemHandler) GetUserGems(w http.ResponseWriter, r *http.Request) {
