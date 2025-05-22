@@ -23,7 +23,7 @@ func (h *Handler) RegisterUserGemRoutes(r *mux.Router) {
 
 	r.Handle("/user-gems", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserGems))).Methods("GET")
 	r.Handle("/user-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserReferralCode))).Methods("GET")
-	r.Handle("/validate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.ValidateReferralCode))).Methods("GET")
+	r.Handle("/validate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.ValidateReferralCode))).Methods("GET","OPTIONS")
 	r.Handle("/generate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GenerateReferralCode))).Methods("POST")
 }
 
