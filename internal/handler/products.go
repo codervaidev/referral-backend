@@ -24,6 +24,8 @@ func (h *Handler) RegisterProductRoutes(r *mux.Router) {
     r.HandleFunc("/products/{id}", ph.GetByID).Methods("GET", "OPTIONS")
     // Fetch products by category id
     r.HandleFunc("/products/category/{category_id}", ph.GetByCategoryID).Methods("GET", "OPTIONS")
+    // Fetch products by recommended_for class
+    r.HandleFunc("/products/recommended/{class_id}", ph.GetByRecommendedFor).Methods("GET", "OPTIONS")
 }
 
 // GetAll returns every product in the catalogue.
@@ -73,6 +75,24 @@ func (h *ProductHandler) GetByCategoryID(w http.ResponseWriter, r *http.Request)
     }
 
     products, err := h.Repo.GetByCategoryID(r.Context(), catID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(products)
+}
+
+// GetByRecommendedFor fetches products where recommended_for matches the provided class id.
+func (h *ProductHandler) GetByRecommendedFor(w http.ResponseWriter, r *http.Request) {
+    clsStr := mux.Vars(r)["class_id"]
+    clsID, err := strconv.Atoi(clsStr)
+    if err != nil {
+        http.Error(w, "Invalid class id", http.StatusBadRequest)
+        return
+    }
+
+    products, err := h.Repo.GetByRecommendedFor(r.Context(), clsID)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return

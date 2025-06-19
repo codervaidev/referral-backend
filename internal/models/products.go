@@ -16,6 +16,7 @@ type Product struct {
     Sold        *int      `json:"sold"`
     WishlistCount *int     `json:"wishlist_count"`
     Rating        *float64 `json:"rating"`
+    RecommendedFor *[]int  `json:"recommended_for"`
     ImageURLs   *[]string `json:"image_urls"`
     Vendor      *string   `json:"vendor"`
     Variants    []Variant `json:"variants,omitempty"`
