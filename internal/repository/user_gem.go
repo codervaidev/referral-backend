@@ -96,3 +96,19 @@ func (r *UserGemRepo) GenerateReferralCode(ctx context.Context, userID uint) (st
 
 	return newReferralCode, nil
 }
+
+func (r *UserGemRepo) RedeemReferralCode(ctx context.Context, userID uint, points int) (bool, error) {
+	query := `
+		UPDATE referral_user
+		SET points = points - $1
+		WHERE user_id = $2
+	`
+	
+	_, err := r.DB.Exec(ctx, query, points, userID)
+	fmt.Printf("Query error: %v\n", err)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

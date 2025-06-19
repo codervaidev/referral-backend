@@ -20,7 +20,7 @@ type GemHistoryResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	Phone     string `json:"phone"`
 	Name      string `json:"name"`
-	ImageUrl  string `json:"image_url"`
+	ImageUrl  *string `json:"image_url"`
 }
 
 func (GemHistory) TableName() string {

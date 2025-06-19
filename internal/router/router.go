@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	
 )
 
 func New(db *pgxpool.Pool) *mux.Router {
@@ -28,6 +29,9 @@ func New(db *pgxpool.Pool) *mux.Router {
 	handler.RegisterGemRoutes(api)
 	handler.RegisterUserGemRoutes(api)
 	handler.RegisterGemHistoryRoutes(api)
+	
+	// User details routes
+	handler.RegisterUserDetailsRoutes(api)
 
 	return router
 }
