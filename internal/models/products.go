@@ -19,6 +19,10 @@ type Product struct {
     RecommendedFor *[]int  `json:"recommended_for"`
     ImageURLs   *[]string `json:"image_urls"`
     Vendor      *string   `json:"vendor"`
+    // IsWishlisted denotes whether the currently authenticated user has added
+    // this product to their wishlist. Handlers set this field dynamically
+    // based on the JWT user context.
+    IsWishlisted bool `json:"is_wishlisted"`
     Variants    []Variant `json:"variants,omitempty"`
 }
 

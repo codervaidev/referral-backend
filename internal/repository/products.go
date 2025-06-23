@@ -16,13 +16,17 @@ func NewProductRepo(db *pgxpool.Pool) *ProductRepo {
     return &ProductRepo{DB: db}
 }
 
-// GetAll retrieves every product from the products table.
-func (r *ProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
+// GetAll retrieves every product and marks them as wishlisted for the provided
+// user ID, if any. Pass userID = 0 to indicate an unauthenticated request.
+func (r *ProductRepo) GetAll(ctx context.Context, userID uint) ([]models.Product, error) {
     const query = `
-        SELECT id, category_id, link, title, description, price, stock, sold, wishlist_count, rating, recommended_for, image_urls, vendor
-        FROM products`
+        SELECT p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating,
+               p.recommended_for, p.image_urls, p.vendor,
+               (w.product_id IS NOT NULL) AS is_wishlisted
+        FROM products p
+        LEFT JOIN product_wishlist w ON w.product_id = p.id AND w.user_id = $1`
 
-    rows, err := r.DB.Query(ctx, query)
+    rows, err := r.DB.Query(ctx, query, userID)
     if err != nil {
         return nil, err
     }
@@ -33,9 +37,10 @@ func (r *ProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
         var (
             p          models.Product
             rawImgURLs []byte
+            isWishlisted bool
         )
         var recFor []int32
-        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor); err != nil {
+        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor, &isWishlisted); err != nil {
             return nil, err
         }
         if len(recFor) > 0 {
@@ -53,25 +58,32 @@ func (r *ProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
             }
             p.ImageURLs = &urls
         }
+        p.IsWishlisted = isWishlisted
         products = append(products, p)
     }
 
     return products, nil
 }
 
-// GetByID fetches a single product row by its id.
-func (r *ProductRepo) GetByID(ctx context.Context, id int) (*models.Product, error) {
+// GetByID fetches a single product row by its id, and whether it is wishlisted
+// by the specified user.
+func (r *ProductRepo) GetByID(ctx context.Context, id int, userID uint) (*models.Product, error) {
     const query = `
-        SELECT id, category_id, link, title, description, price, stock, sold, wishlist_count, rating, recommended_for, image_urls, vendor
-        FROM products WHERE id=$1`
+        SELECT p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating,
+               p.recommended_for, p.image_urls, p.vendor,
+               (w.product_id IS NOT NULL) AS is_wishlisted
+        FROM products p
+        LEFT JOIN product_wishlist w ON w.product_id = p.id AND w.user_id = $2
+        WHERE p.id=$1`
 
     var (
         p          models.Product
         rawImgURLs []byte
+        isWishlisted bool
     )
 
     var recFor []int32
-    err := r.DB.QueryRow(ctx, query, id).Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor)
+    err := r.DB.QueryRow(ctx, query, id, userID).Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor, &isWishlisted)
     if err != nil {
         return nil, err
     }
@@ -89,15 +101,20 @@ func (r *ProductRepo) GetByID(ctx context.Context, id int) (*models.Product, err
         }
         p.ImageURLs = &urls
     }
+    p.IsWishlisted = isWishlisted
     return &p, nil
 }
 
-func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int) ([]models.Product, error) {
+func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int, userID uint) ([]models.Product, error) {
     const query = `
-        SELECT id, category_id, link, title, description, price, stock, sold, wishlist_count, rating, recommended_for, image_urls, vendor
-        FROM products WHERE category_id=$1`
+        SELECT p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating,
+               p.recommended_for, p.image_urls, p.vendor,
+               (w.product_id IS NOT NULL) AS is_wishlisted
+        FROM products p
+        LEFT JOIN product_wishlist w ON w.product_id = p.id AND w.user_id = $2
+        WHERE p.category_id=$1`
 
-    rows, err := r.DB.Query(ctx, query, categoryID)
+    rows, err := r.DB.Query(ctx, query, categoryID, userID)
     if err != nil {
         return nil, err
     }
@@ -108,9 +125,10 @@ func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int) ([]mo
         var (
             p          models.Product
             rawImgURLs []byte
+            isWishlisted bool
         )
         var recFor []int32
-        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor); err != nil {
+        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor, &isWishlisted); err != nil {
             return nil, err
         }
         if len(recFor) > 0 {
@@ -127,6 +145,7 @@ func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int) ([]mo
             }
             p.ImageURLs = &urls
         }
+        p.IsWishlisted = isWishlisted
         products = append(products, p)
     }
 
@@ -134,12 +153,16 @@ func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int) ([]mo
 }
 
 // GetByRecommendedFor returns products that match the recommended_for class id.
-func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int) ([]models.Product, error) {
+func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, userID uint) ([]models.Product, error) {
     const query = `
-        SELECT id, category_id, link, title, description, price, stock, sold, wishlist_count, rating, recommended_for, image_urls, vendor
-        FROM products WHERE $1 = ANY(recommended_for)`
+        SELECT p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating,
+               p.recommended_for, p.image_urls, p.vendor,
+               (w.product_id IS NOT NULL) AS is_wishlisted
+        FROM products p
+        LEFT JOIN product_wishlist w ON w.product_id = p.id AND w.user_id = $2
+        WHERE $1 = ANY(p.recommended_for)`
 
-    rows, err := r.DB.Query(ctx, query, classID)
+    rows, err := r.DB.Query(ctx, query, classID, userID)
     if err != nil {
         return nil, err
     }
@@ -150,9 +173,10 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int) ([]m
         var (
             p          models.Product
             rawImgURLs []byte
+            isWishlisted bool
         )
         var recFor []int32
-        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor); err != nil {
+        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor, &isWishlisted); err != nil {
             return nil, err
         }
         if len(recFor) > 0 {
@@ -169,6 +193,7 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int) ([]m
             }
             p.ImageURLs = &urls
         }
+        p.IsWishlisted = isWishlisted
         products = append(products, p)
     }
 
