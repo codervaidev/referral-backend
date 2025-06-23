@@ -79,6 +79,10 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
             p.ImageURLs = &urls
         }
 
+        // Since these products are fetched from the user's wishlist,
+        // they are, by definition, wish-listed.
+        p.IsWishlisted = true
+
         products = append(products, p)
     }
 
