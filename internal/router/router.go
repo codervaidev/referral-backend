@@ -9,7 +9,7 @@ import (
 )
 
 func New(db *pgxpool.Pool) *mux.Router {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(true)
 	api := router.PathPrefix("/api").Subrouter()
 
 	// Add middleware
@@ -35,6 +35,8 @@ func New(db *pgxpool.Pool) *mux.Router {
 	
 	// User details routes
 	handler.RegisterUserDetailsRoutes(api)
+	// Product wishlist routes
+	handler.RegisterProductWishlistRoutes(api)
 
 	return router
 }
