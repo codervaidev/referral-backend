@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/codervaidev/referral-backend/internal/models"
@@ -62,9 +63,11 @@ func (r *CartRepo) GetActiveCart(ctx context.Context, userID uint) (*models.Cart
 func (r *CartRepo) getItemsByCartID(ctx context.Context, cartID uuid.UUID) ([]models.CartItem, error) {
     const query = `
         SELECT ci.id, ci.cart_id, ci.product_id, ci.variant_id, ci.quantity, ci.price_at_add, ci.created_at, ci.updated_at,
-               p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating, p.recommended_for, p.image_urls, p.vendor
+               p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating, p.recommended_for, p.image_urls, p.vendor,
+               v.id, v.product_id, v.variant_name, v.pics, v.variant_type
         FROM cart_items ci
         JOIN products p ON p.id = ci.product_id
+        LEFT JOIN variants v ON v.id = ci.variant_id
         WHERE ci.cart_id=$1`
 
     rows, err := r.DB.Query(ctx, query, cartID)
@@ -80,9 +83,15 @@ func (r *CartRepo) getItemsByCartID(ctx context.Context, cartID uuid.UUID) ([]mo
             p  models.Product
             rawImgURLs []byte
             recFor []int32
+            rawPics []byte
+            vID *int
+            varProdID *int
+            varName *string
+            varType *string
         )
         if err := rows.Scan(&it.ID, &it.CartID, &it.ProductID, &it.VariantID, &it.Quantity, &it.PriceAtAdd, &it.CreatedAt, &it.UpdatedAt,
-            &p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor); err != nil {
+            &p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor,
+            &vID, &varProdID, &varName, &rawPics, &varType); err != nil {
             return nil, err
         }
         if len(rawImgURLs) > 0 {
@@ -98,6 +107,25 @@ func (r *CartRepo) getItemsByCartID(ctx context.Context, cartID uuid.UUID) ([]mo
             p.RecommendedFor = &ints
         }
         it.Product = &p
+
+        if vID != nil {
+            var variant models.Variant
+            if vID != nil {
+                variant.ID = *vID
+            }
+            variant.ProductID = varProdID
+            variant.VariantName = varName
+            variant.VariantType = varType
+            // pics
+            if len(rawPics) > 0 {
+                var pics []string
+                if err := json.Unmarshal(rawPics, &pics); err != nil {
+                    return nil, err
+                }
+                variant.Pics = &pics
+            }
+            it.Variant = &variant
+        }
         items = append(items, it)
     }
 
