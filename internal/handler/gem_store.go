@@ -19,6 +19,7 @@ func (h *Handler) RegisterGemRoutes(r *mux.Router) {
     gh := &GemHandler{Repo: repo}
 
     r.HandleFunc("/gems", gh.GetAll).Methods("GET")
+    r.HandleFunc("/gems/leaderboard", gh.GetLeaderboard).Methods("GET")
     r.HandleFunc("/gems/{id}", gh.GetByID).Methods("GET")
     r.HandleFunc("/gems", gh.Create).Methods("POST")
     r.HandleFunc("/gems/{id}", gh.Update).Methods("PUT")
@@ -83,4 +84,15 @@ func (h *GemHandler) Delete(w http.ResponseWriter, r *http.Request) {
         return
     }
     w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *GemHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+    entries, err := h.Repo.GetLeaderboard(r.Context())
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(entries)
 }

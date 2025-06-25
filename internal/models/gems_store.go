@@ -19,6 +19,15 @@ type Gem struct {
     Picture4    *string   `json:"picture_4"`
 }
 
+// LeaderboardEntry represents a user's position in the gems leaderboard
+type LeaderboardEntry struct {
+    UserID        uint    `json:"user_id"`
+    StudentName   *string `json:"student_name"`
+    StudentImage  *string `json:"student_image"`
+    Class         *string `json:"class"`
+    TotalGems     int     `json:"total_gems"`
+}
+
 func (Gem) TableName() string {
 	return "gems_store"
 }

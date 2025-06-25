@@ -72,3 +72,38 @@ func (r *GemRepo) Delete(ctx context.Context, id string) error {
     _, err := r.DB.Exec(ctx, "DELETE FROM gems_store WHERE id=$1", id)
     return err
 }
+
+func (r *GemRepo) GetLeaderboard(ctx context.Context) ([]models.LeaderboardEntry, error) {
+    query := `
+        SELECT 
+            u.id AS user_id,
+            p.name AS student_name,
+            p."imageUrl" AS student_image,
+            pc.class,
+            r.points AS total_gems
+        FROM referral_user r
+        LEFT JOIN "User" u ON r.user_id = u.id
+        LEFT JOIN "Profile" p ON p."userId" = u.id
+        LEFT JOIN profile_classes pc ON pc.profile_id = p.id
+        ORDER BY r.points DESC
+        LIMIT 10
+    `
+    
+    rows, err := r.DB.Query(ctx, query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var entries []models.LeaderboardEntry
+    for rows.Next() {
+        var entry models.LeaderboardEntry
+        err := rows.Scan(&entry.UserID, &entry.StudentName, &entry.StudentImage, &entry.Class, &entry.TotalGems)
+        if err != nil {
+            return nil, err
+        }
+        entries = append(entries, entry)
+    }
+    
+    return entries, nil
+}
