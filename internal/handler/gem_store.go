@@ -19,7 +19,7 @@ func (h *Handler) RegisterGemRoutes(r *mux.Router) {
     gh := &GemHandler{Repo: repo}
 
     r.HandleFunc("/gems", gh.GetAll).Methods("GET")
-    r.HandleFunc("/gems/leaderboard", gh.GetLeaderboard).Methods("GET")
+    r.HandleFunc("/gems/leaderboard", gh.GetLeaderboard).Methods("GET","OPTIONS")
     r.HandleFunc("/gems/{id}", gh.GetByID).Methods("GET")
     r.HandleFunc("/gems", gh.Create).Methods("POST")
     r.HandleFunc("/gems/{id}", gh.Update).Methods("PUT")
