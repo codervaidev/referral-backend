@@ -266,4 +266,19 @@ func (r *CartRepo) GetLatestCheckedOutCart(ctx context.Context, userID uint) (*m
     }
     c.Items = items
     return &c, nil
+}
+
+// GetActiveCartTotal returns the summed price (quantity * price_at_add) of all
+// items in the user's active cart. If no cart or items exist, total is 0.
+func (r *CartRepo) GetActiveCartTotal(ctx context.Context, userID uint) (float64, error) {
+    const q = `SELECT COALESCE(SUM(ci.quantity * ci.price_at_add), 0)
+               FROM carts c
+               JOIN cart_items ci ON ci.cart_id = c.id
+               WHERE c.user_id=$1 AND c.status='active'`
+
+    var total float64
+    if err := r.DB.QueryRow(ctx, q, userID).Scan(&total); err != nil {
+        return 0, err
+    }
+    return total, nil
 } 

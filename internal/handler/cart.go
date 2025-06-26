@@ -24,6 +24,7 @@ func (h *Handler) RegisterCartRoutes(r *mux.Router) {
 
     r.HandleFunc("/cart", ch.GetCart).Methods("GET", "OPTIONS")
     r.HandleFunc("/cart/items", ch.AddItem).Methods("POST", "OPTIONS")
+    r.HandleFunc("/cart/total", ch.GetCartTotal).Methods("GET", "OPTIONS")
     r.HandleFunc("/cart/items/{product_id}", ch.UpdateItemQuantity).Methods("PUT", "OPTIONS")
     r.HandleFunc("/cart/items/{product_id}", ch.RemoveItem).Methods("DELETE", "OPTIONS")
     r.HandleFunc("/cart/items", ch.Clear).Methods("DELETE", "OPTIONS")
@@ -211,4 +212,24 @@ func getVariantIDQueryParam(r *http.Request) (*int, error) {
         return nil, err
     }
     return &v, nil
+}
+
+// GetCartTotal computes the total price of the active cart and returns it.
+func (h *CartHandler) GetCartTotal(w http.ResponseWriter, r *http.Request) {
+    userID, ok := extractUserID(r)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    total, err := h.Repo.GetActiveCartTotal(r.Context(), userID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]any{
+        "total": total,
+    })
 } 
