@@ -247,4 +247,23 @@ func (r *CartRepo) Checkout(ctx context.Context, userID uint) error {
     const upd = `UPDATE carts SET status='checked_out', updated_at=now() WHERE user_id=$1 AND status='active'`
     _, err := r.DB.Exec(ctx, upd, userID)
     return err
+}
+
+// GetLatestCheckedOutCart returns the most recently checked-out cart for the user.
+func (r *CartRepo) GetLatestCheckedOutCart(ctx context.Context, userID uint) (*models.Cart, error) {
+    const cartQuery = `SELECT id, user_id, status, created_at, updated_at FROM carts WHERE user_id=$1 AND status='checked_out' ORDER BY updated_at DESC LIMIT 1`
+    var c models.Cart
+    if err := r.DB.QueryRow(ctx, cartQuery, userID).Scan(&c.ID, &c.UserID, &c.Status, &c.CreatedAt, &c.UpdatedAt); err != nil {
+        if errors.Is(err, pgx.ErrNoRows) {
+            return nil, nil
+        }
+        return nil, err
+    }
+
+    items, err := r.getItemsByCartID(ctx, c.ID)
+    if err != nil {
+        return nil, err
+    }
+    c.Items = items
+    return &c, nil
 } 

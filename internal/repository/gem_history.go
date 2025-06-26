@@ -42,3 +42,10 @@ func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]mode
 
 	return gemHistory, nil
 }
+
+// Add inserts a gem history record.
+func (r *GemHistoryRepo) Add(ctx context.Context, userID uint, amount int, message, typ string) error {
+	const q = `INSERT INTO gems_history (amount, user_id, message, type) VALUES ($1,$2,$3,$4)`
+	_, err := r.db.Exec(ctx, q, amount, userID, message, typ)
+	return err
+}

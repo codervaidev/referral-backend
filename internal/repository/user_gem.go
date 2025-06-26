@@ -112,3 +112,16 @@ func (r *UserGemRepo) RedeemReferralCode(ctx context.Context, userID uint, point
 
 	return true, nil
 }
+
+// DeductPoints subtracts points from the user's referral_user.points balance.
+func (r *UserGemRepo) DeductPoints(ctx context.Context, userID uint, points int) error {
+	const q = `UPDATE referral_user SET points = points - $1 WHERE user_id=$2 AND points >= $1`
+	tag, err := r.DB.Exec(ctx, q, points, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("insufficient gems")
+	}
+	return nil
+}
