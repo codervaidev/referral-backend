@@ -39,6 +39,8 @@ func New(db *pgxpool.Pool) *mux.Router {
 	handler.RegisterProductWishlistRoutes(api)
 	// Cart routes
 	handler.RegisterCartRoutes(api)
+	// Delivery details routes
+	handler.RegisterDeliveryDetailsRoutes(api)
 
 	return router
 }
