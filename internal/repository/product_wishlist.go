@@ -54,30 +54,29 @@ func (r *ProductWishlistRepo) Remove(ctx context.Context, userID uint, productID
 func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID uint) ([]models.Product, error) {
     const query = `
         SELECT 
-  p.id, p.category_id, p.link, p.title, p.description, 
-  p.price, p.stock, p.sold, p.wishlist_count, p.rating, 
-  p.recommended_for, p.image_urls, p.vendor,
-  TRUE AS is_wishlisted,
-  COALESCE(
-    json_agg(
-      json_build_object(
-        'id', v.id,
-        'product_id', v.product_id,
-        'variant_name', v.variant_name,
-        'pics', v.pics,
-        'variant_type', v.variant_type
-      )
-    ) FILTER (WHERE v.id IS NOT NULL),
-    '[]'::json
-  ) AS variants
-FROM product_wishlist w
-JOIN products p ON p.id = w.product_id
-LEFT JOIN variants v ON v.id = w.variant_id
-WHERE w.user_id = $1
-GROUP BY 
-  p.id, p.category_id, p.link, p.title, p.description, 
-  p.price, p.stock, p.sold, p.wishlist_count, p.rating, 
-  p.recommended_for, p.image_urls, p.vendor;
+            p.id, p.category_id, p.link, p.title, p.description, 
+            p.price, p.stock, p.sold, p.wishlist_count, p.rating, 
+            p.recommended_for, p.image_urls, p.vendor,
+            TRUE AS is_wishlisted,
+            COALESCE(
+                json_agg(
+                    json_build_object(
+                        'id', v.id,
+                        'product_id', v.product_id,
+                        'variant_name', v.variant_name,
+                        'pics', v.pics,
+                        'variant_type', v.variant_type
+                     )
+                ) FILTER (WHERE v.id IS NOT NULL),
+                '[]'::json
+            ) AS variants
+        FROM product_wishlist w
+        JOIN products p ON p.id = w.product_id
+        LEFT JOIN variants v ON v.id = w.variant_id
+        WHERE w.user_id = $1
+        GROUP BY p.id, p.category_id, p.link, p.title, p.description, 
+                p.price, p.stock, p.sold, p.wishlist_count, p.rating, 
+                p.recommended_for, p.image_urls, p.vendor
 `
 
     rows, err := r.DB.Query(ctx, query, userID)
