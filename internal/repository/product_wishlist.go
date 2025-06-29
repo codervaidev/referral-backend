@@ -54,30 +54,29 @@ func (r *ProductWishlistRepo) Remove(ctx context.Context, userID uint, productID
 func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID uint) ([]models.Product, error) {
     const query = `
         SELECT 
-            p.id, p.category_id, p.link, p.title, p.description, 
-            p.price, p.stock, p.sold, p.wishlist_count, p.rating, 
-            p.recommended_for, p.image_urls, p.vendor,
-            TRUE AS is_wishlisted,
-            COALESCE(
-                json_agg(
-                    json_build_object(
-                        'id', v.id,
-                        'product_id', v.product_id,
-                        'variant_name', v.variant_name,
-                        'pics', v.pics,
-                        'variant_type', v.variant_type
-                     )
-                ) FILTER (WHERE v.id IS NOT NULL),
-                '[]'::json
-            ) AS variants
-        FROM product_wishlist w
-        JOIN products p ON p.id = w.product_id
-        LEFT JOIN variants v ON v.id = w.variant_id
-        WHERE w.user_id = $1
-        GROUP BY p.id, p.category_id, p.link, p.title, p.description, 
-                p.price, p.stock, p.sold, p.wishlist_count, p.rating, 
-                p.recommended_for, p.image_urls, p.vendor
-`
+            products.id,
+            products.category_id,
+            products.link,
+            products.title,
+            products.description,
+            products.price,
+            products.stock,
+            products.sold,
+            products.wishlist_count,
+            products.rating,
+            products.recommended_for,
+            products.image_urls,
+            products.vendor,
+            variants.id,
+            variants.variant_name,
+            variants.pics,
+            variants.variant_type,
+            true as is_wishlisted
+        FROM product_wishlist
+        JOIN products ON products.id = product_wishlist.product_id
+        LEFT JOIN variants ON variants.id = product_wishlist.variant_id
+        WHERE product_wishlist.user_id = $1
+        `
 
     rows, err := r.DB.Query(ctx, query, userID)
     if err != nil {
@@ -90,11 +89,15 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
         var (
             p          models.Product
             rawImgURLs []byte
-            rawVariants []byte
+            variantID *int
+            variantName *string
+            rawPics []byte
+            variantType *string
+            isWishlisted bool
         )
         var recFor []int32
 
-        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor, &p.IsWishlisted, &rawVariants); err != nil {
+        if err := rows.Scan(&p.ID, &p.CategoryID, &p.Link, &p.Title, &p.Description, &p.Price, &p.Stock, &p.Sold, &p.WishlistCount, &p.Rating, &recFor, &rawImgURLs, &p.Vendor, &variantID, &variantName, &rawPics, &variantType, &isWishlisted); err != nil {
             return nil, err
         }
 
@@ -114,14 +117,33 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
             p.ImageURLs = &urls
         }
 
-        // Parse variants from JSON
-        if len(rawVariants) > 0 {
-            var variants []models.Variant
-            if err := json.Unmarshal(rawVariants, &variants); err != nil {
-                return nil, err
+        // Construct the wished variant and attach it to the product
+        if variantID != nil {
+            var wishedVariant models.Variant
+            wishedVariant.ID = *variantID
+            if variantName != nil {
+                wishedVariant.VariantName = variantName
             }
-            p.Variants = variants
+
+            // Set ProductID pointer
+            prodIDCopy := p.ID // create a copy to take address of
+            wishedVariant.ProductID = &prodIDCopy
+            if variantType != nil {
+                wishedVariant.VariantType = variantType
+            }
+            if len(rawPics) > 0 {
+                var pics []string
+                if err := json.Unmarshal(rawPics, &pics); err == nil {
+                    wishedVariant.Pics = &pics
+                }
+            }
+
+            // attach to product variants slice
+            p.Variants = []models.Variant{wishedVariant}
         }
+
+        // Set is_wishlisted field
+        p.IsWishlisted = isWishlisted
 
         products = append(products, p)
     }

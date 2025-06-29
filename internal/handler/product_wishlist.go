@@ -132,12 +132,15 @@ func (h *ProductWishlistHandler) GetWishlist(w http.ResponseWriter, r *http.Requ
 	// Optionally fetch variants for each product (similar to product detail handler)
 	vr := repository.NewVariantRepo(h.Repo.DB)
 	for i := range products {
-		v, err := vr.GetByProductID(r.Context(), products[i].ID)
-		if err != nil {
-			// don't fail entire request due to variant fetch errors; log maybe
-			continue
+		// If the repository already attached the wished variant (length > 0), skip fetching all variants.
+		if len(products[i].Variants) == 0 {
+			v, err := vr.GetByProductID(r.Context(), products[i].ID)
+			if err != nil {
+				// don't fail entire request due to variant fetch errors; log maybe
+				continue
+			}
+			products[i].Variants = v
 		}
-		products[i].Variants = v
 	}
 
 	json.NewEncoder(w).Encode(products)
