@@ -7,8 +7,8 @@ import (
 
 	"github.com/codervaidev/referral-backend/internal/models"
 	"github.com/codervaidev/referral-backend/internal/repository"
-	"github.com/gorilla/mux"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 type UserDetailsHandler struct {
@@ -78,4 +78,4 @@ func (h *UserDetailsHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(details)
-} 
+}

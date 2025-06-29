@@ -21,7 +21,7 @@ func (h *Handler) RegisterGemHistoryRoutes(r *mux.Router) {
 	cfg := config.Load()
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
 
-	r.Handle("/gem-history", jwtMiddleware.Middleware(http.HandlerFunc(gemHistoryHandler.GetGemHistory))).Methods("GET","OPTIONS")
+	r.Handle("/gem-history", jwtMiddleware.Middleware(http.HandlerFunc(gemHistoryHandler.GetGemHistory))).Methods("GET", "OPTIONS")
 }
 
 func (h *GemHistoryHandler) GetGemHistory(w http.ResponseWriter, r *http.Request) {

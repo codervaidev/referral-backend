@@ -158,4 +158,4 @@ func extractUserID(r *http.Request) (uint, bool) {
 	}
 
 	return uint(userIDFloat), true
-} 
+}

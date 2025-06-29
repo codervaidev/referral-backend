@@ -21,11 +21,11 @@ func (h *Handler) RegisterUserGemRoutes(r *mux.Router) {
 	cfg := config.Load()
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
 
-	r.Handle("/user-gems", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserGems))).Methods("GET","OPTIONS")
-	r.Handle("/user-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserReferralCode))).Methods("GET","OPTIONS")
-	r.Handle("/validate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.ValidateReferralCode))).Methods("GET","OPTIONS")
-	r.Handle("/generate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GenerateReferralCode))).Methods("POST","OPTIONS")
-	r.Handle("/redeem-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.RedeemReferralCode))).Methods("PUT","OPTIONS")
+	r.Handle("/user-gems", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserGems))).Methods("GET", "OPTIONS")
+	r.Handle("/user-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GetUserReferralCode))).Methods("GET", "OPTIONS")
+	r.Handle("/validate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.ValidateReferralCode))).Methods("GET", "OPTIONS")
+	r.Handle("/generate-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.GenerateReferralCode))).Methods("POST", "OPTIONS")
+	r.Handle("/redeem-referral-code", jwtMiddleware.Middleware(http.HandlerFunc(userGemHandler.RedeemReferralCode))).Methods("PUT", "OPTIONS")
 }
 
 func (h *UserGemHandler) GetUserGems(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func (h *UserGemHandler) GetUserGems(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": err.Error(),
+			"error":  err.Error(),
 			"status": "error",
 		})
 		return
@@ -73,7 +73,7 @@ func (h *UserGemHandler) GetUserReferralCode(w http.ResponseWriter, r *http.Requ
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": err.Error(),
+			"error":  err.Error(),
 			"status": "error",
 		})
 		return
@@ -106,7 +106,7 @@ func (h *UserGemHandler) ValidateReferralCode(w http.ResponseWriter, r *http.Req
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": err.Error(),
+			"error":  err.Error(),
 			"status": "error",
 		})
 		return
@@ -133,7 +133,7 @@ func (h *UserGemHandler) GenerateReferralCode(w http.ResponseWriter, r *http.Req
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": err.Error(),
+			"error":  err.Error(),
 			"status": "error",
 		})
 		return
@@ -148,36 +148,35 @@ func (h *UserGemHandler) RedeemReferralCode(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	
+
 	userIDInt, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	
 	pointsStr := r.URL.Query().Get("points")
 	if pointsStr == "" {
 		http.Error(w, "Points is required", http.StatusBadRequest)
 		return
 	}
-	
+
 	points, err := strconv.Atoi(pointsStr)
 	if err != nil {
 		http.Error(w, "Invalid points value", http.StatusBadRequest)
 		return
 	}
-	
-	redeemed, err := h.Repo.RedeemReferralCode(r.Context(), uint(userIDInt), points)	
+
+	redeemed, err := h.Repo.RedeemReferralCode(r.Context(), uint(userIDInt), points)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": err.Error(),
+			"error":  err.Error(),
 			"status": "error",
 		})
 		return
 	}
-	
+
 	json.NewEncoder(w).Encode(redeemed)
 }

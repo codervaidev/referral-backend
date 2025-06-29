@@ -18,6 +18,7 @@ type ProductWishlist struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    int       `json:"user_id"`
 	ProductID int       `json:"product_id"`
+	VariantID *int      `json:"variant_id,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

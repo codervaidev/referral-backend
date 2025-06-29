@@ -10,22 +10,22 @@ import (
 
 // CategoryHandler exposes endpoints for category resources.
 type CategoryHandler struct {
-    Repo *repository.CategoryRepo
+	Repo *repository.CategoryRepo
 }
 
 func (h *Handler) RegisterCategoryRoutes(r *mux.Router) {
-    repo := repository.NewCategoryRepo(h.DB)
-    ch := &CategoryHandler{Repo: repo}
+	repo := repository.NewCategoryRepo(h.DB)
+	ch := &CategoryHandler{Repo: repo}
 
-    r.HandleFunc("/categories", ch.GetAll).Methods("GET", "OPTIONS")
+	r.HandleFunc("/categories", ch.GetAll).Methods("GET", "OPTIONS")
 }
 
 // GetAll returns the list of categories.
 func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-    cats, err := h.Repo.GetAll(r.Context())
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    json.NewEncoder(w).Encode(cats)
-} 
+	cats, err := h.Repo.GetAll(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(cats)
+}
