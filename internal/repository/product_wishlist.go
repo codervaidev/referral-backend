@@ -126,7 +126,7 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
                 ID: *variantID,
                 ProductID: &p.ID,
                 VariantName: variantName,
-                IsWishlisted: isWishlisted,
+                IsWishlisted: true,
             }
             p.Variants = append(p.Variants, v)
         }

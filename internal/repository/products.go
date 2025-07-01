@@ -84,6 +84,7 @@ func (r *ProductRepo) GetAll(ctx context.Context, userID uint) ([]models.Product
                 ProductID:   &p.ID,
                 VariantName: variantName,
                 VariantType: variantType,
+                IsWishlisted: isWishlisted,
             }
             
             if len(rawVariantPics) > 0 {
@@ -144,7 +145,6 @@ func (r *ProductRepo) GetByID(ctx context.Context, id int, userID uint) (*models
         if err != nil {
             return nil, err
         }
-        
         if product == nil {
             if len(recFor) > 0 {
                 ints := make([]int, len(recFor))
@@ -172,6 +172,7 @@ func (r *ProductRepo) GetByID(ctx context.Context, id int, userID uint) (*models
                 ProductID:   &p.ID,
                 VariantName: variantName,
                 VariantType: variantType,
+                IsWishlisted: isWishlisted,
             }
             
             if len(rawVariantPics) > 0 {
@@ -259,6 +260,7 @@ func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int, userI
                 ProductID:   &p.ID,
                 VariantName: variantName,
                 VariantType: variantType,
+                IsWishlisted: isWishlisted,
             }
             
             if len(rawVariantPics) > 0 {
@@ -348,6 +350,7 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, user
                 ProductID:   &p.ID,
                 VariantName: variantName,
                 VariantType: variantType,
+                IsWishlisted: isWishlisted,
             }
             
             if len(rawVariantPics) > 0 {

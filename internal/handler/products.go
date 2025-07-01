@@ -56,7 +56,7 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, _ := extractUserID(r)
-
+	//fmt.Println("userID", userID)
 	product, err := h.Repo.GetByID(r.Context(), id, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
