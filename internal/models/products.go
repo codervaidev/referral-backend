@@ -25,6 +25,8 @@ type Product struct {
     IsWishlisted bool `json:"is_wishlisted"`
     WishlistVariantID *int `json:"-"` // internal use only
     Variants    []Variant `json:"variants,omitempty"`
+    VariantID   *int    `json:"variant_id,omitempty"`
+    VariantName *string `json:"variant_name,omitempty"`
 }
 
 // TableName overrides the table name used by any ORM that relies on it.

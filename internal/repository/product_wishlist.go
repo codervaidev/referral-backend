@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/codervaidev/referral-backend/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -75,13 +76,13 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
         LEFT JOIN variants ON variants.id = product_wishlist.variant_id
         WHERE product_wishlist.user_id = $1
         `
-
+    
     rows, err := r.DB.Query(ctx, query, userID)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-
+    //fmt.Println("rows", rows)
     var products []models.Product
     for rows.Next() {
         var (
@@ -119,7 +120,26 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
         // Set is_wishlisted field
         p.IsWishlisted = isWishlisted
 
+        // If variantID is present, append to Variants array
+        if variantID != nil {
+            v := models.Variant{
+                ID: *variantID,
+                ProductID: &p.ID,
+                VariantName: variantName,
+                IsWishlisted: isWishlisted,
+            }
+            p.Variants = append(p.Variants, v)
+        }
+
         products = append(products, p)
+        fmt.Println("products", p);
+    }
+
+    fmt.Printf("products array: %+v\n", products)
+
+    // Or for pretty JSON:
+    if b, err := json.MarshalIndent(products, "", "  "); err == nil {
+        fmt.Println("products array (json):", string(b))
     }
 
     return products, nil
