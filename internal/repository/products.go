@@ -25,8 +25,8 @@ func (r *ProductRepo) GetAll(ctx context.Context, userID uint) ([]models.Product
                (w.product_id IS NOT NULL) AS is_wishlisted,
                v.id as variant_id, v.variant_name, v.pics, v.variant_type
         FROM products p
-        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $1 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $1 and w.variant_id is not null and w.variant_id = v.id)
         LEFT JOIN variants v ON v.product_id = p.id
+        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $1 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $1 and w.variant_id is not null and w.variant_id = v.id)
         ORDER BY p.id, v.id`
 
     rows, err := r.DB.Query(ctx, query, userID)
@@ -115,8 +115,8 @@ func (r *ProductRepo) GetByID(ctx context.Context, id int, userID uint) (*models
                (w.product_id IS NOT NULL) AS is_wishlisted,
                v.id as variant_id, v.variant_name, v.pics, v.variant_type
         FROM products p
-        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
         LEFT JOIN variants v ON v.product_id = p.id
+        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
         WHERE p.id=$1
         ORDER BY v.id`
 
@@ -200,8 +200,8 @@ func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int, userI
                (w.product_id IS NOT NULL) AS is_wishlisted,
                v.id as variant_id, v.variant_name, v.pics, v.variant_type
         FROM products p
-        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
         LEFT JOIN variants v ON v.product_id = p.id
+        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
         WHERE p.category_id=$1
         ORDER BY p.id, v.id`
 
@@ -289,8 +289,8 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, user
                (w.product_id IS NOT NULL) AS is_wishlisted,
                v.id as variant_id, v.variant_name, v.pics, v.variant_type
         FROM products p
-        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
         LEFT JOIN variants v ON v.product_id = p.id
+        LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
         WHERE $1 = ANY(p.recommended_for)
         ORDER BY p.id, v.id`
 

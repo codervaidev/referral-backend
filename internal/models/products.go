@@ -23,6 +23,7 @@ type Product struct {
     // this product to their wishlist. Handlers set this field dynamically
     // based on the JWT user context.
     IsWishlisted bool `json:"is_wishlisted"`
+    WishlistVariantID *int `json:"-"` // internal use only
     Variants    []Variant `json:"variants,omitempty"`
 }
 

@@ -10,6 +10,7 @@ type Variant struct {
     VariantName *string   `json:"variant_name"`
     Pics        *[]string `json:"pics"`
     VariantType *string   `json:"variant_type"`
+    IsWishlisted bool `json:"is_wishlisted"`
 }
 
 func (Variant) TableName() string { return "variants" }
