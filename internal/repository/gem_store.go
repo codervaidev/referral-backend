@@ -73,6 +73,15 @@ func (r *GemRepo) Delete(ctx context.Context, id string) error {
     return err
 }
 
+func (r *GemRepo) GetGemsCountWithUserID(ctx context.Context, userID string) (int, error) {
+    var gemsCount int
+    err := r.DB.QueryRow(ctx, "SELECT gems_count FROM gems_store WHERE id=$1", userID).Scan(&gemsCount)
+    if err != nil {
+        return 0, err
+    }
+    return gemsCount, nil
+}
+
 func (r *GemRepo) GetLeaderboard(ctx context.Context) ([]models.LeaderboardEntry, error) {
     query := `
         SELECT 

@@ -23,6 +23,13 @@ func NewProductWishlistRepo(db *pgxpool.Pool) *ProductWishlistRepo {
 func (r *ProductWishlistRepo) Add(ctx context.Context, userID uint, productID int, variantID *int) error {
     var err error
     if variantID != nil {
+        fmt.Println("variantID value:", *variantID)
+    } else {
+        fmt.Println("variantID is nil")
+    }
+    fmt.Println("userID", userID)
+    fmt.Println("productID", productID)
+    if variantID != nil {
         const query = `
             INSERT INTO product_wishlist (user_id, product_id, variant_id)
             VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`

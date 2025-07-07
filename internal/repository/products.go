@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/codervaidev/referral-backend/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -285,6 +286,16 @@ func (r *ProductRepo) GetByCategoryID(ctx context.Context, categoryID int, userI
 
 // GetByRecommendedFor returns products that match the recommended_for class id.
 func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, userID uint) ([]models.Product, error) {
+    fmt.Println("I am here");
+    const gemsCountQuery = `
+        SELECT points FROM referral_user WHERE user_id = $1 LIMIT 1
+    `
+    fmt.Println("userID", userID)
+    var gemsCount int
+    if err := r.DB.QueryRow(ctx, gemsCountQuery, userID).Scan(&gemsCount); err != nil {
+        return nil, err
+    }
+    fmt.Println("gemsCount", gemsCount)
     const query = `
         SELECT p.id, p.category_id, p.link, p.title, p.description, p.price, p.stock, p.sold, p.wishlist_count, p.rating,
                p.recommended_for, p.image_urls, p.vendor,
@@ -293,10 +304,10 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, user
         FROM products p
         LEFT JOIN variants v ON v.product_id = p.id
         LEFT JOIN product_wishlist w ON (w.product_id = p.id AND w.user_id = $2 and w.variant_id is null) or (w.product_id = p.id AND w.user_id = $2 and w.variant_id is not null and w.variant_id = v.id)
-        WHERE $1 = ANY(p.recommended_for)
+        WHERE p.price <= $1
         ORDER BY p.id, v.id`
 
-    rows, err := r.DB.Query(ctx, query, classID, userID)
+    rows, err := r.DB.Query(ctx, query, gemsCount+50, userID)
     if err != nil {
         return nil, err
     }
