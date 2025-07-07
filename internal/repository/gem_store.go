@@ -95,7 +95,7 @@ func (r *GemRepo) GetLeaderboard(ctx context.Context) ([]models.LeaderboardEntry
         LEFT JOIN "Profile" p ON p."userId" = u.id
         LEFT JOIN profile_classes pc ON pc.profile_id = p.id
         ORDER BY r.points DESC
-        LIMIT 3
+        LIMIT 10
     `
     
     rows, err := r.DB.Query(ctx, query)
