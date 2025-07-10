@@ -116,3 +116,19 @@ func (r *GemRepo) GetLeaderboard(ctx context.Context) ([]models.LeaderboardEntry
     
     return entries, nil
 }
+
+func (r *GemRepo) GetUserLeaderboardPosition(ctx context.Context, userID uint) (int, error) {
+    query := `
+        SELECT position FROM (
+            SELECT user_id, RANK() OVER (ORDER BY points DESC) AS position
+            FROM referral_user
+        ) AS ranked WHERE user_id = $1
+    `
+
+    var position int
+    err := r.DB.QueryRow(ctx, query, userID).Scan(&position)
+    if err != nil {
+        return 0, err
+    }
+    return position, nil
+}

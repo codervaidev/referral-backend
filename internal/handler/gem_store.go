@@ -3,6 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+
+	"github.com/codervaidev/referral-backend/internal/config"
+	"github.com/codervaidev/referral-backend/internal/middleware"
 
 	"github.com/codervaidev/referral-backend/internal/models"
 	"github.com/codervaidev/referral-backend/internal/repository"
@@ -18,8 +22,13 @@ func (h *Handler) RegisterGemRoutes(r *mux.Router) {
 	repo := repository.NewGemRepo(h.DB)
 	gh := &GemHandler{Repo: repo}
 
+	// JWT middleware for routes requiring authentication
+	cfg := config.Load()
+	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
+
 	r.HandleFunc("/gems", gh.GetAll).Methods("GET")
 	r.HandleFunc("/gems/leaderboard", gh.GetLeaderboard).Methods("GET", "OPTIONS")
+	r.Handle("/gems/leaderboard/position", jwtMiddleware.Middleware(http.HandlerFunc(gh.GetUserLeaderboardPosition))).Methods("GET", "OPTIONS")
 	r.HandleFunc("/gems/{id}", gh.GetByID).Methods("GET")
 	r.HandleFunc("/gems", gh.Create).Methods("POST")
 	r.HandleFunc("/gems/{id}", gh.Update).Methods("PUT")
@@ -95,4 +104,28 @@ func (h *GemHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(entries)
+}
+
+// GetUserLeaderboardPosition returns the authenticated user's rank on the leaderboard.
+func (h *GemHandler) GetUserLeaderboardPosition(w http.ResponseWriter, r *http.Request) {
+	userIDStr, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	uid64, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	position, err := h.Repo.GetUserLeaderboardPosition(r.Context(), uint(uid64))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{"position": position})
 }
