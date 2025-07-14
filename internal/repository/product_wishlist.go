@@ -151,3 +151,10 @@ func (r *ProductWishlistRepo) GetProductsByUserID(ctx context.Context, userID ui
 
     return products, nil
 } 
+
+func (r *ProductWishlistRepo) GetWishlistCount(ctx context.Context, userID uint) (int, error) {
+    const query = `SELECT COUNT(*) FROM product_wishlist WHERE user_id = $1`
+    var count int
+    err := r.DB.QueryRow(ctx, query, userID).Scan(&count)
+    return count, err
+}

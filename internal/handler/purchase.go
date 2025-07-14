@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/codervaidev/referral-backend/internal/repository"
@@ -16,6 +17,7 @@ type PurchaseHandler struct {
 	GemHistoryRepo     *repository.GemHistoryRepo
 	PurchaseRepo       *repository.PurchaseRepo
 	DeliveryDetailsRepo *repository.DeliveryDetailsRepo
+	ProductRepo        *repository.ProductRepo
 }
 
 func (h *Handler) RegisterPurchaseRoutes(r *mux.Router) {
@@ -25,6 +27,7 @@ func (h *Handler) RegisterPurchaseRoutes(r *mux.Router) {
 		GemHistoryRepo:     repository.NewGemHistoryRepo(h.DB),
 		PurchaseRepo:       repository.NewPurchaseRepo(h.DB),
 		DeliveryDetailsRepo: repository.NewDeliveryDetailsRepo(h.DB),
+		ProductRepo:        repository.NewProductRepo(h.DB),
 	}
 
 	r.HandleFunc("/purchase", ph.Create).Methods("POST", "OPTIONS")
@@ -86,6 +89,19 @@ func (ph *PurchaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Add delivery fee to total points required
 	pointsRequired += deliveryFee
 
+	// validate stock availability for all items
+	for _, item := range cart.Items {
+		product, err := ph.ProductRepo.GetByID(r.Context(), item.ProductID, userID)
+		if err != nil {
+			http.Error(w, "Error checking product stock", http.StatusInternalServerError)
+			return
+		}
+		if product.Stock == nil || *product.Stock < item.Quantity {
+			http.Error(w, fmt.Sprintf("Insufficient stock for product %d. Available: %d, Requested: %d", item.ProductID, *product.Stock, item.Quantity), http.StatusBadRequest)
+			return
+		}
+	}
+
 	// deduct gems
 	if err := ph.GemRepo.DeductPoints(r.Context(), userID, pointsRequired); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -97,6 +113,14 @@ func (ph *PurchaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	
 	// add gem history for delivery fee
 	_ = ph.GemHistoryRepo.Add(r.Context(), userID, -deliveryFee, "Delivery fee", "debit")
+
+	// decrease stock for each product in cart
+	for _, item := range cart.Items {
+		if err := ph.ProductRepo.DecreaseStockAndUpdateSold(r.Context(), item.ProductID, item.Quantity); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
 
 	// mark cart checked_out
 	if err := ph.CartRepo.Checkout(r.Context(), userID); err != nil {

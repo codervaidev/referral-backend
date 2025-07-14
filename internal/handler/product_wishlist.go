@@ -30,6 +30,8 @@ func (h *Handler) RegisterProductWishlistRoutes(r *mux.Router) {
 	r.Handle("/wishlist", jwtMiddleware.Middleware(http.HandlerFunc(wh.AddProduct))).Methods("POST", "OPTIONS")
 	// Remove product from wishlist
 	r.Handle("/wishlist/{product_id}", jwtMiddleware.Middleware(http.HandlerFunc(wh.RemoveProduct))).Methods("DELETE", "OPTIONS")
+	// Get wishlist count
+	r.Handle("/wishlist/count", jwtMiddleware.Middleware(http.HandlerFunc(wh.GetWishlistCount))).Methods("GET", "OPTIONS")
 }
 
 // AddProduct adds a product (and optional variant) to the authenticated user's wishlist.
@@ -143,4 +145,26 @@ func (h *ProductWishlistHandler) GetWishlist(w http.ResponseWriter, r *http.Requ
 	}
 
 	json.NewEncoder(w).Encode(products)
+}
+
+func (h *ProductWishlistHandler) GetWishlistCount(w http.ResponseWriter, r *http.Request) {
+	userIDStr, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	
+	userIDUint64, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	count, err := h.Repo.GetWishlistCount(r.Context(), uint(userIDUint64))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]int{"count": count})
 }

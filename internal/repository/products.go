@@ -307,7 +307,7 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, user
         WHERE p.price <= $1
         ORDER BY p.id, v.id`
 
-    rows, err := r.DB.Query(ctx, query, gemsCount+50, userID)
+    rows, err := r.DB.Query(ctx, query, gemsCount+100, userID)
     if err != nil {
         return nil, err
     }
@@ -382,4 +382,24 @@ func (r *ProductRepo) GetByRecommendedFor(ctx context.Context, classID int, user
     }
 
     return products, nil
+} 
+
+// DecreaseStockAndUpdateSold decreases the stock by the given quantity and increases the sold count
+// for a specific product. It returns an error if the stock is insufficient.
+func (r *ProductRepo) DecreaseStockAndUpdateSold(ctx context.Context, productID int, quantity int) error {
+	const query = `
+		UPDATE products 
+		SET stock = stock - $2, sold = sold + $2 
+		WHERE id = $1 AND stock >= $2`
+	
+	result, err := r.DB.Exec(ctx, query, productID, quantity)
+	if err != nil {
+		return err
+	}
+	
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("insufficient stock for product %d or product not found", productID)
+	}
+	
+	return nil
 } 
