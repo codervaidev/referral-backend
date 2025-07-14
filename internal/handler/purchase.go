@@ -108,12 +108,6 @@ func (ph *PurchaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// add gem history for product purchase
-	_ = ph.GemHistoryRepo.Add(r.Context(), userID, -(pointsRequired-deliveryFee), "Purchase deduction", "debit")
-	
-	// add gem history for delivery fee
-	_ = ph.GemHistoryRepo.Add(r.Context(), userID, -deliveryFee, "Delivery fee", "debit")
-
 	// decrease stock for each product in cart
 	for _, item := range cart.Items {
 		if err := ph.ProductRepo.DecreaseStockAndUpdateSold(r.Context(), item.ProductID, item.Quantity); err != nil {
@@ -134,6 +128,9 @@ func (ph *PurchaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// add single gems_history record for the entire purchase
+	_ = ph.GemHistoryRepo.Add(r.Context(), userID, -pointsRequired, "Purchase", "purchase", &purchaseID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
