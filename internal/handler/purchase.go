@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"strconv"
+
 	"github.com/codervaidev/referral-backend/internal/repository"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -130,7 +132,7 @@ func (ph *PurchaseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add single gems_history record for the entire purchase
-	_ = ph.GemHistoryRepo.Add(r.Context(), userID, -pointsRequired, "Purchase", "purchase", &purchaseID)
+	_ = ph.GemHistoryRepo.Add(r.Context(), userID, -pointsRequired, "তুমি " + strconv.Itoa(pointsRequired) + " পয়েন্ট ব্যবহার করে নিচের পণ্যগুলো ক্রয় করেছো", "purchase", &purchaseID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
