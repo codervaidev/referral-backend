@@ -41,13 +41,14 @@ type PurchaseHistoryDetails struct {
 }
 
 type PurchaseHistoryItem struct {
-	ProductID        int      `json:"product_id"`
-	ProductName      *string  `json:"product_name"`
-	VariantID        *int     `json:"variant_id,omitempty"`
-	VariantName      *string  `json:"variant_name,omitempty"`
-	VariantImageUrl  *string  `json:"variant_image_url,omitempty"`
-	Quantity         int      `json:"quantity"`
-	PriceAtAdd       float64  `json:"price_at_add"`
+	ProductID        int       `json:"product_id"`
+	ProductName      *string   `json:"product_name"`
+	ProductImageUrls *[]string `json:"product_image_urls,omitempty"`
+	VariantID        *int      `json:"variant_id,omitempty"`
+	VariantName      *string   `json:"variant_name,omitempty"`
+	VariantImageUrl  *string   `json:"variant_image_url,omitempty"`
+	Quantity         int       `json:"quantity"`
+	PriceAtAdd       float64   `json:"price_at_add"`
 }
 
 func (GemHistory) TableName() string {

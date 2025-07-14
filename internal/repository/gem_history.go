@@ -95,6 +95,7 @@ func (r *GemHistoryRepo) getPurchaseDetails(ctx context.Context, purchaseID uuid
 		SELECT 
 			ci.product_id,
 			p.title as product_name,
+			p.image_urls,
 			ci.variant_id,
 			v.variant_name,
 			v.pics,
@@ -116,12 +117,14 @@ func (r *GemHistoryRepo) getPurchaseDetails(ctx context.Context, purchaseID uuid
 	
 	for itemRows.Next() {
 		var (
-			item    models.PurchaseHistoryItem
-			rawPics []byte
+			item           models.PurchaseHistoryItem
+			rawPics        []byte
+			rawProductPics []byte
 		)
 		err := itemRows.Scan(
 			&item.ProductID,
 			&item.ProductName,
+			&rawProductPics,
 			&item.VariantID,
 			&item.VariantName,
 			&rawPics,
@@ -130,6 +133,14 @@ func (r *GemHistoryRepo) getPurchaseDetails(ctx context.Context, purchaseID uuid
 		)
 		if err != nil {
 			return nil, err
+		}
+		
+		// Parse the JSONB product image_urls array
+		if len(rawProductPics) > 0 {
+			var productPics []string
+			if err := json.Unmarshal(rawProductPics, &productPics); err == nil {
+				item.ProductImageUrls = &productPics
+			}
 		}
 		
 		// Parse the JSONB pics array and take the first image URL
