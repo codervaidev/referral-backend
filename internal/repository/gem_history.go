@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/codervaidev/referral-backend/internal/models"
 	"github.com/google/uuid"
@@ -96,6 +97,7 @@ func (r *GemHistoryRepo) getPurchaseDetails(ctx context.Context, purchaseID uuid
 			p.title as product_name,
 			ci.variant_id,
 			v.variant_name,
+			v.pics,
 			ci.quantity,
 			ci.price_at_add
 		FROM cart_items ci
@@ -113,18 +115,31 @@ func (r *GemHistoryRepo) getPurchaseDetails(ctx context.Context, purchaseID uuid
 	defer itemRows.Close()
 	
 	for itemRows.Next() {
-		var item models.PurchaseHistoryItem
+		var (
+			item    models.PurchaseHistoryItem
+			rawPics []byte
+		)
 		err := itemRows.Scan(
 			&item.ProductID,
 			&item.ProductName,
 			&item.VariantID,
 			&item.VariantName,
+			&rawPics,
 			&item.Quantity,
 			&item.PriceAtAdd,
 		)
 		if err != nil {
 			return nil, err
 		}
+		
+		// Parse the JSONB pics array and take the first image URL
+		if len(rawPics) > 0 {
+			var pics []string
+			if err := json.Unmarshal(rawPics, &pics); err == nil && len(pics) > 0 {
+				item.VariantImageUrl = &pics[0]
+			}
+		}
+		
 		details.Items = append(details.Items, item)
 	}
 	
