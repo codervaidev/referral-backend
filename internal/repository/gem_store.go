@@ -89,7 +89,7 @@ func (r *GemRepo) GetLeaderboard(ctx context.Context) ([]models.LeaderboardEntry
             p.name AS student_name,
             p."imageUrl" AS student_image,
             pc.class,
-            r.points AS total_gems
+            CAST(r.points AS INTEGER) AS total_gems
         FROM referral_user r
         LEFT JOIN "User" u ON r.user_id = u.id
         LEFT JOIN "Profile" p ON p."userId" = u.id
