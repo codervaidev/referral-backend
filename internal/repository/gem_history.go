@@ -20,7 +20,7 @@ func NewGemHistoryRepo(db *pgxpool.Pool) *GemHistoryRepo {
 
 func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]models.GemHistoryResponse, error) {
 	query := `
-		SELECT gh.id, gh.amount, gh.user_id, gh.message, gh.type, gh.purchase_id, gh.created_at, u.phone, p.name, p."imageUrl" 
+		SELECT gh.id, gh.amount, gh.user_id, gh.message, gh.type, gh.purchase_id, gh.is_viewed, gh.created_at, u.phone, p.name, p."imageUrl" 
 		FROM gems_history gh
 		JOIN "User" u on u.id = user_id
 		JOIN "Profile" p on p."userId" = u.id
@@ -36,7 +36,7 @@ func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]mode
 	var gemHistory []models.GemHistoryResponse
 	for rows.Next() {
 		var gh models.GemHistoryResponse
-		err := rows.Scan(&gh.ID, &gh.Amount, &gh.UserID, &gh.Message, &gh.Type, &gh.PurchaseID, &gh.CreatedAt, &gh.Phone, &gh.Name, &gh.ImageUrl)
+		err := rows.Scan(&gh.ID, &gh.Amount, &gh.UserID, &gh.Message, &gh.Type, &gh.PurchaseID, &gh.IsViewed, &gh.CreatedAt, &gh.Phone, &gh.Name, &gh.ImageUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -59,6 +59,55 @@ func (r *GemHistoryRepo) GetGemHistory(ctx context.Context, userID uint) ([]mode
 func (r *GemHistoryRepo) Add(ctx context.Context, userID uint, amount int, message, typ string, purchaseID *uuid.UUID) error {
 	const q = `INSERT INTO gems_history (amount, user_id, message, type, purchase_id) VALUES ($1,$2,$3,$4,$5)`
 	_, err := r.db.Exec(ctx, q, amount, userID, message, typ, purchaseID)
+	return err
+}
+
+// GetReferralBonusStatus checks for unviewed referral bonuses and returns count
+func (r *GemHistoryRepo) GetReferralBonusStatus(ctx context.Context, userID uint) (*models.ReferralBonusStatusResponse, error) {
+	// Check unviewed referral bonuses count and sum
+	unviewedQuery := `
+		SELECT COUNT(*), COALESCE(SUM(amount), 0)
+		FROM gems_history 
+		WHERE user_id = $1 AND type = 'referral_bonus' AND is_viewed = false
+	`
+	
+	var unviewedCount int
+	var unviewedAmount int
+	err := r.db.QueryRow(ctx, unviewedQuery, userID).Scan(&unviewedCount, &unviewedAmount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get total count of referral bonuses
+	totalQuery := `
+		SELECT COUNT(*) 
+		FROM gems_history 
+		WHERE user_id = $1 AND type = 'referral_bonus'
+	`
+	
+	var totalCount int
+	err = r.db.QueryRow(ctx, totalQuery, userID).Scan(&totalCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.ReferralBonusStatusResponse{
+		HasNewReferralBonus: unviewedCount > 0,
+		ReferralBonusCount:  totalCount,
+		UnviewedAmount:      unviewedAmount,
+		UnviewedCount:       unviewedCount,
+	}, nil
+}
+
+// MarkReferralBonusesViewed marks all referral bonuses as viewed for a user
+func (r *GemHistoryRepo) MarkReferralBonusesViewed(ctx context.Context, userID uint) error {
+	query := `
+		UPDATE gems_history 
+		SET is_viewed = true 
+		WHERE user_id = $1 AND type = 'referral_bonus' AND is_viewed = false
+	`
+	
+	_, err := r.db.Exec(ctx, query, userID)
 	return err
 }
 

@@ -22,6 +22,7 @@ func (h *Handler) RegisterGemHistoryRoutes(r *mux.Router) {
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret)
 
 	r.Handle("/gem-history", jwtMiddleware.Middleware(http.HandlerFunc(gemHistoryHandler.GetGemHistory))).Methods("GET", "OPTIONS")
+	r.Handle("/referral-bonus-status", jwtMiddleware.Middleware(http.HandlerFunc(gemHistoryHandler.GetReferralBonusStatus))).Methods("GET", "OPTIONS")
 }
 
 func (h *GemHistoryHandler) GetGemHistory(w http.ResponseWriter, r *http.Request) {
@@ -44,4 +45,35 @@ func (h *GemHistoryHandler) GetGemHistory(w http.ResponseWriter, r *http.Request
 	}
 
 	json.NewEncoder(w).Encode(gemHistory)
+}
+
+func (h *GemHistoryHandler) GetReferralBonusStatus(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userIDInt, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get current status
+	status, err := h.Repo.GetReferralBonusStatus(r.Context(), uint(userIDInt))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Mark all referral bonuses as viewed
+	err = h.Repo.MarkReferralBonusesViewed(r.Context(), uint(userIDInt))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
 }

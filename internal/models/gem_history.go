@@ -13,6 +13,7 @@ type GemHistory struct {
 	Message    string    `json:"message"`
 	Type       string    `json:"type"`
 	PurchaseID *uuid.UUID `json:"purchase_id,omitempty"`
+	IsViewed   bool      `json:"is_viewed"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
@@ -23,6 +24,7 @@ type GemHistoryResponse struct {
 	Message    string    `json:"message"`
 	Type       string    `json:"type"`
 	PurchaseID *uuid.UUID `json:"purchase_id,omitempty"`
+	IsViewed   bool      `json:"is_viewed"`
 	CreatedAt  time.Time `json:"created_at"`
 	Phone      string    `json:"phone"`
 	Name       string    `json:"name"`
@@ -49,6 +51,14 @@ type PurchaseHistoryItem struct {
 	VariantImageUrl  *string   `json:"variant_image_url,omitempty"`
 	Quantity         int       `json:"quantity"`
 	PriceAtAdd       float64   `json:"price_at_add"`
+}
+
+// ReferralBonusStatusResponse represents the response for checking referral bonus status
+type ReferralBonusStatusResponse struct {
+	HasNewReferralBonus bool `json:"has_new_referral_bonus"`
+	ReferralBonusCount  int  `json:"referral_bonus_count"`
+	UnviewedAmount      int  `json:"unviewed_amount"`
+	UnviewedCount       int  `json:"unviewed_count"`
 }
 
 func (GemHistory) TableName() string {
