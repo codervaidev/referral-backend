@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,7 +17,7 @@ func NewUserGemRepo(db *pgxpool.Pool) *UserGemRepo {
 	return &UserGemRepo{DB: db}
 }
 
-func (r *UserGemRepo) GetUserGems(ctx context.Context, userID uint) (int, error) {
+func (r *UserGemRepo) GetUserGems(ctx context.Context, userID uint) (float64, error) {
 	query := `
 		SELECT points
 		FROM referral_user
@@ -31,7 +31,7 @@ func (r *UserGemRepo) GetUserGems(ctx context.Context, userID uint) (int, error)
 	}
 	defer rows.Close()
 
-	var points int
+	var points float64
 	for rows.Next() {
 		err := rows.Scan(&points)
 		if err != nil {
