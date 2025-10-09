@@ -17,7 +17,7 @@ func NewUserGemRepo(db *pgxpool.Pool) *UserGemRepo {
 	return &UserGemRepo{DB: db}
 }
 
-func (r *UserGemRepo) GetUserGems(ctx context.Context, userID uint) (float64, error) {
+func (r *UserGemRepo) GetUserGems(ctx context.Context, userID uint) (int, error) {
 	query := `
 		SELECT points
 		FROM referral_user
@@ -39,7 +39,7 @@ func (r *UserGemRepo) GetUserGems(ctx context.Context, userID uint) (float64, er
 		}
 	}
 
-	return points, nil
+	return int(points), nil
 }
 
 func (r *UserGemRepo) GetUserReferralCode(ctx context.Context, userID uint) (string, error) {
