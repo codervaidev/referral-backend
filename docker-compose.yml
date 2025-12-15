@@ -3,7 +3,7 @@ services:
     build: .
     container_name: referral-app
     ports:
-      - "127.0.0.1:8002:8002"
+      - "8002:8002"
     env_file:
       - .env
     restart: unless-stopped
