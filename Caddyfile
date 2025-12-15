@@ -1,3 +1,6 @@
 referral.acsfutureschool.com {
-    reverse_proxy app:8002
+    reverse_proxy localhost:8002
+    tls {
+        protocols tls1.2 tls1.3
+    }
 }
