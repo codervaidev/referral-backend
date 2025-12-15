@@ -39,9 +39,6 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Install wget for health checks
-RUN apk add --no-cache wget ca-certificates
-
 # Copy the binary from builder
 COPY --from=builder /app/main .
 COPY --from=builder /app/.env .
