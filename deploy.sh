@@ -31,6 +31,6 @@ sleep 10
 
 # Check if the application is running
 echo "Checking application status..."
-curl -sf http://localhost:8080/api/health || exit 1
+curl -sf http://localhost:8002/api/health || exit 1
 
 echo "Deployment completed successfully!" 
